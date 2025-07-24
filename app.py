@@ -107,7 +107,7 @@ def main():
         email = email.strip().lower()
 
         st.subheader("Uploaded Leads")
-        st.dataframe(df)  # display original data
+        st.dataframe(df)  # Display original data
 
         with st.spinner("Removing existing leads..."):
             if not (existing_dfs := download_user_csvs(email)):
@@ -115,7 +115,7 @@ def main():
                 cleaned_df = df
                 st.success("No deduplication needed.")
                 st.stop()
-                return  # no need to deduplicate
+                return  # No need to deduplicate
 
             # Deduplicate for each dedupe key
             cleaned_df = df
@@ -125,16 +125,15 @@ def main():
             st.success("Deduplication complete.")
 
         # Display results
-        df = cleaned_df
         st.subheader("Deduplicated Leads")
-        st.write(df)
+        st.dataframe(cleaned_df)
 
         # Download
-        csv = df.to_csv(index=False).encode('utf-8')
+        csv = cleaned_df.to_csv(index=False).encode('utf-8')
         st.download_button(
             label="Download deduplicated CSV",
             data=csv,
-            file_name='cleaned_file.csv',
+            file_name='deduplicated_file.csv',
             mime='text/csv',
         )
 

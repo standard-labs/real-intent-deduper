@@ -18,7 +18,7 @@ DOWNLOAD_URL = "https://fileio.couchdrop.io/file/download"
 DEDUPE_KEYS: str = {"email_1", "phone_1"}
 
 
-def list_user_csvs(user_email: str) -> list[dict]:
+def _list_user_csvs(user_email: str) -> list[dict]:
     """Pull a directory of all files associated with a particular user by email."""
     response = requests.post(
         f"{LIST_URL}",
@@ -26,16 +26,12 @@ def list_user_csvs(user_email: str) -> list[dict]:
         params={"path": f"/Real_Intent/Customers/{user_email}/"}
     )
 
-    if response.status_code != 200:
-        st.error(f"Failed to list files: {response.json()}")
-        st.stop()
-        return
-
+    response.raise_for_status()
     files = response.json()["ls"]
     return [f for f in files if f["filename"].endswith(".csv")]
 
 
-def download_csv(path: str) -> pd.DataFrame:
+def _download_csv(path: str) -> pd.DataFrame:
     """
     Download a CSV file from Couchdrop.
 
@@ -48,6 +44,12 @@ def download_csv(path: str) -> pd.DataFrame:
     )
     response.raise_for_status()
     return pd.read_csv(StringIO(response.text))
+
+
+def download_user_csvs(user_email: str) -> list[pd.DataFrame]:
+    """Download all CSV files associated with a particular user by email."""
+    user_csvs: list[dict] = _list_user_csvs(user_email)
+    return [_download_csv(f["path"]) for f in user_csvs]
 
 
 def remove_duplicates(
@@ -84,23 +86,12 @@ def main():
         st.dataframe(df)  # display original data
 
         with st.spinner("Removing existing leads..."):
-            user_csvs: list[dict] = list_user_csvs(email)
-            existing_dfs: list[pd.DataFrame] = []
-
-            for f in user_csvs:
-                path = f"/Real_Intent/Customers/{email}/{f['filename']}"
-                if f["filename"] != uploaded_file.name:  # exclude current file
-                    try:
-                        existing_dfs.append(download_csv(path))
-                    except Exception as e:
-                        st.warning(f"Failed to load {f['name']}: {e}")
-
-            if not existing_dfs:
+            if not (existing_dfs := download_user_csvs(email)):
                 st.info("No previous files found. Showing original leads.")
                 cleaned_df = df
                 st.success("No deduplication needed.")
                 st.stop()
-                return
+                return  # no need to deduplicate
 
             # Deduplicate for each dedupe key
             cleaned_df = df

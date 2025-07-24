@@ -77,7 +77,7 @@ def main():
         email = email.strip().lower()
 
         st.subheader("Uploaded Leads")
-        st.dataframe(df)
+        st.dataframe(df)  # display original data
 
         with st.spinner("Removing existing leads..."):
             user_csvs: list[dict] = list_user_csvs(email)
@@ -105,7 +105,6 @@ def main():
 
             st.success("Deduplication complete.")
             st.subheader("Cleaned Leads")
-            st.dataframe(cleaned_df)
 
         df = cleaned_df
         st.subheader("Cleaned Leads")

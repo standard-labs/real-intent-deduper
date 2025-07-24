@@ -7,11 +7,15 @@ from io import StringIO
 import os
 
 
+# ---- Setup ----
+
 load_dotenv()
 
 COUCHDROP_API_KEY = os.getenv("COUCHDROP_API_KEY")
 LIST_URL = "https://fileio.couchdrop.io/file/ls"
 DOWNLOAD_URL = "https://fileio.couchdrop.io/file/download"
+
+DEDUPE_KEYS: str = {"email_1", "phone_1"}
 
 
 def list_user_csvs(user_email: str) -> list[dict]:
@@ -87,17 +91,20 @@ def main():
                     except Exception as e:
                         st.warning(f"Failed to load {f['name']}: {e}")
 
-            if existing_dfs:
-                dedupe = "email_1"
-                cleaned_df = remove_duplicates(df, existing_dfs, dedupe)
-                dedupe = "phone_1"
-                cleaned_df = remove_duplicates(cleaned_df, existing_dfs, dedupe)
-                st.success("Deduplication complete.")
-                st.subheader("Cleaned Leads")
-                st.dataframe(cleaned_df)
-            else:
+            if not existing_dfs:
                 st.info("No previous files found. Showing original leads.")
                 cleaned_df = df
+                st.success("No deduplication needed.")
+                st.stop()
+                return
+
+            dedupe = "email_1"
+            cleaned_df = remove_duplicates(df, existing_dfs, dedupe)
+            dedupe = "phone_1"
+            cleaned_df = remove_duplicates(cleaned_df, existing_dfs, dedupe)
+            st.success("Deduplication complete.")
+            st.subheader("Cleaned Leads")
+            st.dataframe(cleaned_df)
 
         df = cleaned_df
         st.subheader("Cleaned Leads")

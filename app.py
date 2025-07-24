@@ -47,7 +47,15 @@ def _download_csv(path: str) -> pd.DataFrame:
 
 
 def download_user_csvs(user_email: str) -> list[pd.DataFrame]:
-    """Download all CSV files associated with a particular user by email."""
+    """
+    Download all CSV files associated with a particular user by email.
+
+    Args:
+        user_email (str): The user's email.
+
+    Returns:
+        list[pd.DataFrame]: A list of dataframes, one for each CSV file.
+    """
     user_csvs: list[dict] = _list_user_csvs(user_email)
 
     def _build_path(f: dict) -> str:
@@ -56,20 +64,23 @@ def download_user_csvs(user_email: str) -> list[pd.DataFrame]:
     return [_download_csv(_build_path(f)) for f in user_csvs]
 
 
+def _is_same_file(df1: pd.DataFrame, df2: pd.DataFrame, dedupe_key: str) -> bool:
+    """Check if two dataframes are the same based on a dedupe key."""
+    return df1[dedupe_key].equals(df2[dedupe_key])
+
+
 def remove_duplicates(
     new_df: pd.DataFrame, 
     existing_dfs: list[pd.DataFrame], 
     dedupe_key: str
 ) -> pd.DataFrame:
     """Remove duplicates from a new dataframe based on an existing set of dataframes."""
-    combined_existing = pd.concat(existing_dfs, ignore_index=True)
-    deduped_df = new_df[~new_df[dedupe_key].isin(combined_existing[dedupe_key])]
-    
-    # DEBUG
-    removed_count = len(new_df) - len(deduped_df)
-    print(f"Removed {removed_count} leads based on {dedupe_key}")
-    # DEBUG
+    foreign_existing_dfs: list[pd.DataFrame] = [
+        df for df in existing_dfs if not _is_same_file(new_df, df, dedupe_key)
+    ]
 
+    combined_existing = pd.concat(foreign_existing_dfs, ignore_index=True)
+    deduped_df = new_df[~new_df[dedupe_key].isin(combined_existing[dedupe_key])]
     return deduped_df
 
 

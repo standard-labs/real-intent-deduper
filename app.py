@@ -14,7 +14,8 @@ LIST_URL = "https://fileio.couchdrop.io/file/ls"
 DOWNLOAD_URL = "https://fileio.couchdrop.io/file/download"
 
 
-def list_user_csvs(user_email: str):
+def list_user_csvs(user_email: str) -> list[dict]:
+    """Pull a directory of all files associated with a particular user by email."""
     response = requests.post(
         f"{LIST_URL}",
         headers={"token": f"{COUCHDROP_API_KEY}"},
@@ -30,7 +31,8 @@ def list_user_csvs(user_email: str):
     return [f for f in files if f["filename"].endswith(".csv")]
 
 
-def download_csv(path: str):
+def download_csv(path: str) -> pd.DataFrame:
+    """Download a CSV file from Couchdrop."""
     response = requests.post(
         f"{DOWNLOAD_URL}",
         headers={"token": f"{COUCHDROP_API_KEY}"},
@@ -40,9 +42,14 @@ def download_csv(path: str):
     return pd.read_csv(StringIO(response.text))
 
 
-def remove_duplicates(new_df, existing_dfs, dedupe):
+def remove_duplicates(
+    new_df: pd.DataFrame, 
+    existing_dfs: list[pd.DataFrame], 
+    dedupe_key: str
+) -> pd.DataFrame:
+    """Remove duplicates from a new dataframe based on an existing set of dataframes."""
     combined_existing = pd.concat(existing_dfs, ignore_index=True)
-    deduped_df = new_df[~new_df[dedupe].isin(combined_existing[dedupe])]
+    deduped_df = new_df[~new_df[dedupe_key].isin(combined_existing[dedupe_key])]
     return deduped_df
 
 
@@ -59,7 +66,7 @@ def main():
     st.header('Upload CSV File')
     uploaded_file = st.file_uploader("Choose a CSV file", type="csv")
 
-    email = st.text_input("Enter your email")
+    email: str = st.text_input("Enter your email")
 
     if uploaded_file and email:
         df = pd.read_csv(uploaded_file)
@@ -69,12 +76,12 @@ def main():
         st.dataframe(df)
 
         with st.spinner("Removing existing leads..."):
-            user_csvs = list_user_csvs(email)
-            existing_dfs = []
+            user_csvs: list[dict] = list_user_csvs(email)
+            existing_dfs: list[pd.DataFrame] = []
 
             for f in user_csvs:
                 path = f"/Real_Intent/Customers/{email}/{f['filename']}"
-                if f["filename"] != uploaded_file.name:  # Exclude current file
+                if f["filename"] != uploaded_file.name:  # exclude current file
                     try:
                         existing_dfs.append(download_csv(path))
                     except Exception as e:

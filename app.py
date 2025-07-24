@@ -63,7 +63,7 @@ def download_user_csvs(user_email: str) -> list[pd.DataFrame]:
         return f"/Real_Intent/Customers/{user_email}/{f['filename']}"
 
     download_inputs: list[str] = [_build_path(f) for f in user_csvs]
-    with ThreadPoolExecutor(max_workers=10) as executor:
+    with ThreadPoolExecutor(max_workers=20) as executor:
         return list(executor.map(_download_csv, download_inputs))
 
 

@@ -5,6 +5,7 @@ import requests
 from dotenv import load_dotenv
 from io import StringIO
 import os
+from concurrent.futures import ThreadPoolExecutor
 
 
 # ---- Setup ----
@@ -61,7 +62,9 @@ def download_user_csvs(user_email: str) -> list[pd.DataFrame]:
     def _build_path(f: dict) -> str:
         return f"/Real_Intent/Customers/{user_email}/{f['filename']}"
 
-    return [_download_csv(_build_path(f)) for f in user_csvs]
+    download_inputs: list[str] = [_build_path(f) for f in user_csvs]
+    with ThreadPoolExecutor(max_workers=10) as executor:
+        return list(executor.map(_download_csv, download_inputs))
 
 
 def _is_same_file(df1: pd.DataFrame, df2: pd.DataFrame, dedupe_key: str) -> bool:

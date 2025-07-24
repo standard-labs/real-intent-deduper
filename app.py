@@ -104,16 +104,16 @@ def main():
                 cleaned_df = remove_duplicates(cleaned_df, existing_dfs, dedupe_key)
 
             st.success("Deduplication complete.")
-            st.subheader("Cleaned Leads")
 
+        # Display results
         df = cleaned_df
-        st.subheader("Cleaned Leads")
+        st.subheader("Deduplicated Leads")
         st.write(df)
 
         # Download
         csv = df.to_csv(index=False).encode('utf-8')
         st.download_button(
-            label="Download cleaned CSV",
+            label="Download deduplicated CSV",
             data=csv,
             file_name='cleaned_file.csv',
             mime='text/csv',

@@ -98,10 +98,11 @@ def main():
                 st.stop()
                 return
 
-            dedupe = "email_1"
-            cleaned_df = remove_duplicates(df, existing_dfs, dedupe)
-            dedupe = "phone_1"
-            cleaned_df = remove_duplicates(cleaned_df, existing_dfs, dedupe)
+            # Deduplicate for each dedupe key
+            cleaned_df = df
+            for dedupe_key in DEDUPE_KEYS:
+                cleaned_df = remove_duplicates(cleaned_df, existing_dfs, dedupe_key)
+
             st.success("Deduplication complete.")
             st.subheader("Cleaned Leads")
             st.dataframe(cleaned_df)

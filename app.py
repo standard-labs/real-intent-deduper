@@ -14,22 +14,24 @@ LIST_URL = "https://fileio.couchdrop.io/file/ls"
 DOWNLOAD_URL = "https://fileio.couchdrop.io/file/download"
 
 
-def list_user_csvs(user_email):
-    response = requests.get(
+def list_user_csvs(user_email: str):
+    response = requests.post(
         f"{LIST_URL}",
         headers={"token": f"{COUCHDROP_API_KEY}"},
         params={"path": f"/Real_Intent/Customers/{user_email}/"}
     )
-    try:
-        response.raise_for_status()
-        files = response.json()
-        return [f for f in files if f["filename"].endswith(".csv")]
-    except Exception:
-        return []
+
+    if response.status_code != 200:
+        st.error(f"Failed to list files: {response.json()}")
+        st.stop()
+        return
+
+    files = response.json()["ls"]
+    return [f for f in files if f["filename"].endswith(".csv")]
 
 
-def download_csv(path):
-    response = requests.get(
+def download_csv(path: str):
+    response = requests.post(
         f"{DOWNLOAD_URL}",
         headers={"token": f"{COUCHDROP_API_KEY}"},
         params={"path": path}
@@ -91,7 +93,6 @@ def main():
                 cleaned_df = df
 
         df = cleaned_df
-
         st.subheader("Cleaned Leads")
         st.write(df)
 

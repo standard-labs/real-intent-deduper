@@ -15,7 +15,7 @@ COUCHDROP_API_KEY = os.getenv("COUCHDROP_API_KEY")
 LIST_URL = "https://fileio.couchdrop.io/file/ls"
 DOWNLOAD_URL = "https://fileio.couchdrop.io/file/download"
 
-DEDUPE_KEYS: str = {"email_1", "phone_1"}
+DEDUPE_KEYS: str = {"md5"}
 
 
 def _list_user_csvs(user_email: str) -> list[dict]:
@@ -64,6 +64,12 @@ def remove_duplicates(
     """Remove duplicates from a new dataframe based on an existing set of dataframes."""
     combined_existing = pd.concat(existing_dfs, ignore_index=True)
     deduped_df = new_df[~new_df[dedupe_key].isin(combined_existing[dedupe_key])]
+    
+    # DEBUG
+    removed_count = len(new_df) - len(deduped_df)
+    print(f"Removed {removed_count} leads based on {dedupe_key}")
+    # DEBUG
+
     return deduped_df
 
 

@@ -36,7 +36,11 @@ def list_user_csvs(user_email: str) -> list[dict]:
 
 
 def download_csv(path: str) -> pd.DataFrame:
-    """Download a CSV file from Couchdrop."""
+    """
+    Download a CSV file from Couchdrop.
+
+    Raises on non-200 codes as `path` is assumed to exist.
+    """
     response = requests.post(
         f"{DOWNLOAD_URL}",
         headers={"token": f"{COUCHDROP_API_KEY}"},

@@ -49,7 +49,11 @@ def _download_csv(path: str) -> pd.DataFrame:
 def download_user_csvs(user_email: str) -> list[pd.DataFrame]:
     """Download all CSV files associated with a particular user by email."""
     user_csvs: list[dict] = _list_user_csvs(user_email)
-    return [_download_csv(f["path"]) for f in user_csvs]
+
+    def _build_path(f: dict) -> str:
+        return f"/Real_Intent/Customers/{user_email}/{f['filename']}"
+
+    return [_download_csv(_build_path(f)) for f in user_csvs]
 
 
 def remove_duplicates(

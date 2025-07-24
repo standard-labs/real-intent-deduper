@@ -1,16 +1,18 @@
 import streamlit as st
 import pandas as pd
 import requests
-from io import StringIO
 
 from dotenv import load_dotenv
+from io import StringIO
 import os
+
 
 load_dotenv()
 
 COUCHDROP_API_KEY = os.getenv("COUCHDROP_API_KEY")
 LIST_URL = "https://fileio.couchdrop.io/file/ls"
 DOWNLOAD_URL = "https://fileio.couchdrop.io/file/download"
+
 
 def list_user_csvs(user_email):
     response = requests.get(
@@ -22,8 +24,9 @@ def list_user_csvs(user_email):
         response.raise_for_status()
         files = response.json()
         return [f for f in files if f["filename"].endswith(".csv")]
-    except:
+    except Exception:
         return []
+
 
 def download_csv(path):
     response = requests.get(
@@ -34,10 +37,12 @@ def download_csv(path):
     response.raise_for_status()
     return pd.read_csv(StringIO(response.text))
 
+
 def remove_duplicates(new_df, existing_dfs, dedupe):
     combined_existing = pd.concat(existing_dfs, ignore_index=True)
     deduped_df = new_df[~new_df[dedupe].isin(combined_existing[dedupe])]
     return deduped_df
+
 
 def main():
     st.title('Existing Lead Remover')
@@ -98,6 +103,7 @@ def main():
             file_name='cleaned_file.csv',
             mime='text/csv',
         )
+
 
 if __name__ == "__main__":
     main()
